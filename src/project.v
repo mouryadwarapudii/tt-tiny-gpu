@@ -1,4 +1,3 @@
-`timescale 1ns/1ns
 `default_nettype none
 module cache (
 	clk,
@@ -1902,12 +1901,12 @@ module tt_adapter (
 	out_ready,
 	done
 );
-	parameter NUM_CORES = 2;
+	parameter NUM_CORES = 1;
 	parameter THREADS_PER_BLOCK = 4;
-	parameter DATA_MEM_ADDR_BITS = 8;
+	parameter DATA_MEM_ADDR_BITS = 5;
 	parameter DATA_MEM_DATA_BITS = 8;
 	parameter DATA_MEM_NUM_CHANNELS = 4;
-	parameter PROGRAM_MEM_ADDR_BITS = 8;
+	parameter PROGRAM_MEM_ADDR_BITS = 5;
 	parameter PROGRAM_MEM_DATA_BITS = 16;
 	input wire clk;
 	input wire reset;
@@ -2143,7 +2142,11 @@ module tt_adapter (
 		.PROGRAM_MEM_DATA_BITS(PROGRAM_MEM_DATA_BITS),
 		.PROGRAM_MEM_NUM_CHANNELS(1),
 		.NUM_CORES(NUM_CORES),
-		.THREADS_PER_BLOCK(THREADS_PER_BLOCK)
+		.THREADS_PER_BLOCK(THREADS_PER_BLOCK),
+		.L1_NUM_SETS(4),
+		.L1_WAYS(1),
+		.L2_NUM_SETS(4),
+		.L2_WAYS(1)
 	) gpu_instance(
 		.clk(clk),
 		.reset(gpu_reset),
@@ -2210,8 +2213,7 @@ module tt_um_mouryadwarapudii_tiny_gpu (
 		.out_ready(uio_in[3]),
 		.done(done)
 	);
-endmodule
-`default_nettype none
+endmodule`default_nettype none
 module alu (
 	clk,
 	reset,
