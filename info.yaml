@@ -1,17 +1,20 @@
 # Tiny Tapeout project information
 project:
-  title:        ""      # Project title
-  author:       ""      # Your name
-  discord:      ""      # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
-  description:  ""      # One line description of what your project does
-  language:     "Verilog" # other examples include SystemVerilog, Amaranth, VHDL, etc
-  clock_hz:     0       # Clock frequency in Hz (or 0 if not applicable)
+  title:        "tiny-gpu"
+  author:       "mouryadwarapudii"
+  discord:      ""      # TODO: fill in if you want a Tapeout Discord role
+  description:  "A minimal educational GPU (SIMD cores, L1/L2 cache, shared memory) exposed through a byte-serial command protocol"
+  language:     "Verilog" # project.v is pre-flattened from SystemVerilog via sv2v
+  clock_hz:     50000000 # 50MHz, matching src/config.json's default CLOCK_PERIOD (20ns) - unverified until timing closes
 
-  # How many tiles your design occupies? A single tile is about 167x108 uM.
-  tiles: "1x1"          # Valid values: 1x1, 1x2, 2x2, 3x2, 4x2, 6x2 or 8x2
+  # tiny-gpu (2 cores, L1+L2 caches, on-chip program/data memory, shared memory scratchpad) is a
+  # comparatively large design for Tiny Tapeout - starting generous since a too-small tile size
+  # will simply fail to place/route, whereas an oversized one just wastes shuttle space we can
+  # shrink later once we see real utilization numbers from this run.
+  tiles: "8x2"          # Valid values: 1x1, 1x2, 2x2, 3x2, 4x2, 6x2 or 8x2
 
   # Your top module name must start with "tt_um_". Make it unique by including your github username:
-  top_module:  "tt_um_example"
+  top_module:  "tt_um_mouryadwarapudii_tiny_gpu"
 
   # List your project's source files here.
   # Source files must be in ./src and you must list each source file separately, one per line.
@@ -23,31 +26,31 @@ project:
 # This section is for the datasheet/website. Use descriptive names (e.g., RX, TX, MOSI, SCL, SEG_A, etc.).
 pinout:
   # Inputs
-  ui[0]: ""
-  ui[1]: ""
-  ui[2]: ""
-  ui[3]: ""
-  ui[4]: ""
-  ui[5]: ""
-  ui[6]: ""
-  ui[7]: ""
+  ui[0]: "cmd/data byte, bit 0"
+  ui[1]: "cmd/data byte, bit 1"
+  ui[2]: "cmd/data byte, bit 2"
+  ui[3]: "cmd/data byte, bit 3"
+  ui[4]: "cmd/data byte, bit 4"
+  ui[5]: "cmd/data byte, bit 5"
+  ui[6]: "cmd/data byte, bit 6"
+  ui[7]: "cmd/data byte, bit 7"
 
   # Outputs
-  uo[0]: ""
-  uo[1]: ""
-  uo[2]: ""
-  uo[3]: ""
-  uo[4]: ""
-  uo[5]: ""
-  uo[6]: ""
-  uo[7]: ""
+  uo[0]: "response byte, bit 0"
+  uo[1]: "response byte, bit 1"
+  uo[2]: "response byte, bit 2"
+  uo[3]: "response byte, bit 3"
+  uo[4]: "response byte, bit 4"
+  uo[5]: "response byte, bit 5"
+  uo[6]: "response byte, bit 6"
+  uo[7]: "response byte, bit 7"
 
   # Bidirectional pins
-  uio[0]: ""
-  uio[1]: ""
-  uio[2]: ""
-  uio[3]: ""
-  uio[4]: ""
+  uio[0]: "in_ready (out): adapter can accept a command/data byte on ui_in"
+  uio[1]: "in_valid (in): ui_in holds a valid command/data byte"
+  uio[2]: "out_valid (out): uo_out holds a valid response byte"
+  uio[3]: "out_ready (in): host has consumed the response byte on uo_out"
+  uio[4]: "done (out): mirrors the GPU's kernel-done signal"
   uio[5]: ""
   uio[6]: ""
   uio[7]: ""
