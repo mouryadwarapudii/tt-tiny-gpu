@@ -45,3 +45,35 @@ jobs:
       id-token: write   # to verify the deployment originates from an appropriate source
     steps:
       - uses: TinyTapeout/tt-gds-action/viewer@ttsky26c
+
+  # Commits the built GDS into gds/ in this repo, so the latest layout is always available
+  # without downloading CI artifacts by hand. Runs regardless of whether gl_test/viewer/precheck
+  # pass, since those don't affect whether the GDS itself is valid to look at.
+  archive_gds:
+    needs: gds
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v6
+
+      - name: download GDS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tt_submission
+          path: /tmp/tt_submission
+
+      - name: copy GDS into gds/ and commit if changed
+        run: |
+          mkdir -p gds
+          cp /tmp/tt_submission/tt_submission/*.gds gds/
+          if git diff --quiet -- gds/; then
+            echo "GDS unchanged, nothing to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add gds/
+          git commit -m "Update GDS (run ${{ github.run_id }}, commit ${{ github.sha }})"
+          git push
