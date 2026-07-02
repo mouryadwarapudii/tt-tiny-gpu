@@ -1903,10 +1903,10 @@ module tt_adapter (
 );
 	parameter NUM_CORES = 1;
 	parameter THREADS_PER_BLOCK = 4;
-	parameter DATA_MEM_ADDR_BITS = 5;
+	parameter DATA_MEM_ADDR_BITS = 4;
 	parameter DATA_MEM_DATA_BITS = 8;
-	parameter DATA_MEM_NUM_CHANNELS = 4;
-	parameter PROGRAM_MEM_ADDR_BITS = 5;
+	parameter DATA_MEM_NUM_CHANNELS = 2;
+	parameter PROGRAM_MEM_ADDR_BITS = 4;
 	parameter PROGRAM_MEM_DATA_BITS = 16;
 	input wire clk;
 	input wire reset;
@@ -2143,10 +2143,15 @@ module tt_adapter (
 		.PROGRAM_MEM_NUM_CHANNELS(1),
 		.NUM_CORES(NUM_CORES),
 		.THREADS_PER_BLOCK(THREADS_PER_BLOCK),
-		.L1_NUM_SETS(4),
+		.L1_NUM_CHANNELS(1),
+		.L1_NUM_SETS(2),
 		.L1_WAYS(1),
-		.L2_NUM_SETS(4),
-		.L2_WAYS(1)
+		.L1_LINE_SIZE(2),
+		.L2_NUM_CHANNELS(1),
+		.L2_NUM_SETS(2),
+		.L2_WAYS(1),
+		.L2_LINE_SIZE(2),
+		.SHARED_MEM_ADDR_BITS(4)
 	) gpu_instance(
 		.clk(clk),
 		.reset(gpu_reset),

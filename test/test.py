@@ -70,8 +70,16 @@ async def start_kernel(dut):
 
 @cocotb.test()
 async def test_tt_adapter_matadd(dut):
-    # Drives an 8-thread matrix-addition kernel entirely through the Tiny Tapeout pin-level
-    # byte-serial protocol (see docs/info.md) - this is the interface a real host would use.
+    # Drives a scaled-down 1x4 matrix-add kernel (same shape as test/test_matadd.py's 1x8
+    # version, just smaller) entirely through the Tiny Tapeout pin-level byte-serial protocol
+    # (tt_adapter -> tt_um_tiny_gpu) instead of tiny-gpu's native wide bus - this is the
+    # interface a real host chip would actually use. The TT instantiation's on-chip memory is
+    # only 16 rows (see src/tt_adapter.sv's area notes), so the problem size is cut to match -
+    # this only affects the *test*, not the kernel's correctness for its (smaller) address range.
+    # Uses a full 4-thread block (THREADS_PER_BLOCK) rather than a partial one - scheduler.sv
+    # advances current_pc from next_pc[THREADS_PER_BLOCK-1], which never updates for a disabled
+    # (unused) thread, so a partial block silently hangs. Not something introduced here - the
+    # reference matadd/matmul kernels avoid it the same way, by using a full block.
     clock = Clock(dut.clk, 25, unit="us")
     cocotb.start_soon(clock.start())
 
@@ -88,8 +96,8 @@ async def test_tt_adapter_matadd(dut):
         0b0101000011011110, # MUL R0, %blockIdx, %blockDim
         0b0011000000001111, # ADD R0, R0, %threadIdx         ; i = blockIdx * blockDim + threadIdx
         0b1001000100000000, # CONST R1, #0                   ; baseA (matrix A base address)
-        0b1001001000001000, # CONST R2, #8                   ; baseB (matrix B base address)
-        0b1001001100010000, # CONST R3, #16                  ; baseC (matrix C base address)
+        0b1001001000000100, # CONST R2, #4                   ; baseB (matrix B base address)
+        0b1001001100001000, # CONST R3, #8                   ; baseC (matrix C base address)
         0b0011010000010000, # ADD R4, R1, R0                 ; addr(A[i]) = baseA + i
         0b0111010001000000, # LDR R4, R4                     ; load A[i] from global memory
         0b0011010100100000, # ADD R5, R2, R0                 ; addr(B[i]) = baseB + i
@@ -100,8 +108,8 @@ async def test_tt_adapter_matadd(dut):
         0b1111000000000000, # RET                            ; end of kernel
     ]
     data = [
-        0, 1, 2, 3, 4, 5, 6, 7, # Matrix A (1 x 8)
-        0, 1, 2, 3, 4, 5, 6, 7  # Matrix B (1 x 8)
+        0, 1, 2, 3, # Matrix A (1 x 4)
+        0, 1, 2, 3  # Matrix B (1 x 4)
     ]
 
     for addr, instr in enumerate(program):
@@ -110,7 +118,7 @@ async def test_tt_adapter_matadd(dut):
     for addr, value in enumerate(data):
         await write_data_byte(dut, addr, value)
 
-    await set_thread_count(dut, 8)
+    await set_thread_count(dut, 4)
     await start_kernel(dut)
 
     cycles = 0
@@ -122,7 +130,7 @@ async def test_tt_adapter_matadd(dut):
 
     dut._log.info(f"Kernel completed in {cycles} cycles (via TT adapter)")
 
-    expected_results = [a + b for a, b in zip(data[0:8], data[8:16])]
+    expected_results = [a + b for a, b in zip(data[0:4], data[4:8])]
     for i, expected in enumerate(expected_results):
-        result = await read_data_byte(dut, 16 + i)
+        result = await read_data_byte(dut, 8 + i)
         assert result == expected, f"Result mismatch at index {i}: expected {expected}, got {result}"
