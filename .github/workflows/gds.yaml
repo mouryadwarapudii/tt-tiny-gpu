@@ -68,12 +68,15 @@ jobs:
         run: |
           mkdir -p gds
           cp /tmp/tt_submission/tt_submission/*.gds gds/
-          if git diff --quiet -- gds/; then
+          git add gds/
+          # git diff (unlike `git status`) only compares tracked files, so it misses brand-new
+          # untracked ones - `git add` first, then check the *staged* diff, so a first-ever
+          # gds/ file is correctly seen as a change instead of silently skipped.
+          if git diff --cached --quiet -- gds/; then
             echo "GDS unchanged, nothing to commit"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add gds/
           git commit -m "Update GDS (run ${{ github.run_id }}, commit ${{ github.sha }})"
           git push
